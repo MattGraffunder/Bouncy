@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 
 namespace Bouncy
@@ -43,8 +44,8 @@ namespace Bouncy
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            graphics.PreferredBackBufferWidth = 500;
-            graphics.PreferredBackBufferHeight = 500;
+            graphics.PreferredBackBufferWidth = _renderedWidth;
+            graphics.PreferredBackBufferHeight = _renderedHeight;
             graphics.ApplyChanges();
 
             IsMouseVisible = true;
@@ -102,7 +103,10 @@ namespace Bouncy
 
             if (_input.Click)
             {
-                _discs.Add(new Disc(5, new Vector2(_input.XDirection, _input.YDirection), new Vector2(.5f, 1)));
+                float xVelocity = 2 * _input.XDirection / (float)_gameWorldWidth;
+                float yVelocity = 2 * _input.YDirection / (float)_gameWorldHeight;
+
+                _discs.Add(new Disc(5, new Vector2(_input.XDirection, _input.YDirection), new Vector2(xVelocity, yVelocity)));
             }
             
             foreach (var disc in _discs)
@@ -136,6 +140,31 @@ namespace Bouncy
                     disc.ReverseYVelocity();
                 }
             }
+
+            List<Disc> removeDiscs = new List<Disc>();
+
+            //Check collisions
+            foreach (var disc in _discs)
+            {
+                foreach (var otherDisc in _discs)
+                {
+                    if (disc == otherDisc) continue;
+
+                    var dist = Math.Pow((disc.Position.X - otherDisc.Position.X), 2) + Math.Pow((disc.Position.Y - otherDisc.Position.Y), 2);
+
+                    if (dist < Math.Pow(disc.Radius + otherDisc.Radius, 2))
+                    {
+                        //Is collision
+                        removeDiscs.Add(disc);
+                        removeDiscs.Add(otherDisc);
+                    }
+                }
+            }
+
+            removeDiscs.ForEach(d => _discs.Remove(d));
+
+            //Find distance between two disc centers
+                //If less than twice the sum of the radii, they collide
 
             base.Update(gameTime);
         }
