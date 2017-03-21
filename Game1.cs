@@ -1,6 +1,8 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Bouncy.Input;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
 
 namespace Bouncy
 {
@@ -12,12 +14,17 @@ namespace Bouncy
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        Disc _disc;
+        List<Disc> _discs = new List<Disc>();
 
         Renderer renderer;
 
         private int _gameWorldWidth = 100;
         private int _gameWorldHeight = 100;
+
+        private int _renderedWidth = 500;
+        private int _renderedHeight = 500;
+
+        GameInput _input;
 
         public Game1()
         {
@@ -40,10 +47,15 @@ namespace Bouncy
             graphics.PreferredBackBufferHeight = 500;
             graphics.ApplyChanges();
 
-            renderer.Initialize(GraphicsDevice, _gameWorldWidth, _gameWorldHeight);
+            IsMouseVisible = true;
 
-            _disc = new Disc(new Vector2(_gameWorldWidth / 2, _gameWorldHeight / 2), 5);
-                        
+            renderer.Initialize(GraphicsDevice, _gameWorldWidth, _gameWorldHeight, _discs);
+
+            _input = InputFactory.GetInput(_renderedWidth / _gameWorldWidth, _renderedHeight / _gameWorldHeight);
+
+            _discs.Add(new Disc(5, new Vector2(_gameWorldWidth / 2, _gameWorldHeight / 2), new Vector2(.5f, 1)));
+            _discs.Add(new Disc(5, new Vector2(_gameWorldWidth / 4, _gameWorldHeight / 4), new Vector2(1, 1.5f)));
+
             base.Initialize();
         }
 
@@ -59,7 +71,7 @@ namespace Bouncy
             // TODO: use this.Content to load your game content hereS
             Texture2D circleTexture = Content.Load<Texture2D>("Graphics/Circle");
 
-            renderer.AddRenderItem(_disc, circleTexture);
+            renderer.AddRenderItem(typeof(Disc), circleTexture);
         }
 
         /// <summary>
@@ -78,36 +90,51 @@ namespace Bouncy
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            _input.Update(gameTime);
+
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
-            _disc.Update(gameTime);
-
-            //Check if ball hit wall
-            if (_disc.Position.X - _disc.Radius < 0)
+            if (_input.Clear)
             {
-                _disc.SetXPosition(0 + _disc.Radius);
-                _disc.ReverseXVelocity();
+                _discs.Clear();
             }
 
-            if (_disc.Position.X + _disc.Radius >= _gameWorldWidth)
+            if (_input.Click)
             {
-                _disc.SetXPosition(_gameWorldWidth - _disc.Radius);
-                _disc.ReverseXVelocity();
+                _discs.Add(new Disc(5, new Vector2(_input.XDirection, _input.YDirection), new Vector2(.5f, 1)));
             }
-
-            //Check if ball hit ceiling
-            if (_disc.Position.Y - _disc.Radius < 0)
+            
+            foreach (var disc in _discs)
             {
-                _disc.SetYPosition(0 + _disc.Radius);
-                _disc.ReverseYVelocity();
-            }
+                // TODO: Add your update logic here
+                disc.Update(gameTime);
 
-            if (_disc.Position.Y + _disc.Radius >= _gameWorldHeight)
-            {
-                _disc.SetYPosition(_gameWorldHeight - _disc.Radius);
-                _disc.ReverseYVelocity();
+                //Check if ball hit wall
+                if (disc.Position.X - disc.Radius < 0)
+                {
+                    disc.SetXPosition(0 + disc.Radius);
+                    disc.ReverseXVelocity();
+                }
+
+                if (disc.Position.X + disc.Radius >= _gameWorldWidth)
+                {
+                    disc.SetXPosition(_gameWorldWidth - disc.Radius);
+                    disc.ReverseXVelocity();
+                }
+
+                //Check if ball hit ceiling
+                if (disc.Position.Y - disc.Radius < 0)
+                {
+                    disc.SetYPosition(0 + disc.Radius);
+                    disc.ReverseYVelocity();
+                }
+
+                if (disc.Position.Y + disc.Radius >= _gameWorldHeight)
+                {
+                    disc.SetYPosition(_gameWorldHeight - disc.Radius);
+                    disc.ReverseYVelocity();
+                }
             }
 
             base.Update(gameTime);

@@ -18,11 +18,11 @@ namespace Bouncy
 
         public Vector2 Velocity { get; private set; }
 
-        public Disc(Vector2 startingPosition, int radius)
+        public Disc(int radius, Vector2 startingPosition, Vector2 startingVelocity )
         {
             Position = startingPosition;
             Radius = radius;
-            Velocity = new Vector2(.5f, 1);
+            Velocity = startingVelocity;
         }
 
         public void Update(GameTime gameTime)

@@ -19,10 +19,11 @@ namespace Bouncy
         private GraphicsDevice _graphicsDevice;
         SpriteBatch _spriteBatch;
 
-        private Disc _disc;
-        private Texture2D _texture;
+        private IList<Disc> _discs;
 
-        public void Initialize(GraphicsDevice graphicsDevice, int worldWidth, int worldHeight)
+        Dictionary<Type, Texture2D> _textureMap = new Dictionary<Type, Texture2D>();
+
+        public void Initialize(GraphicsDevice graphicsDevice, int worldWidth, int worldHeight, IList<Disc> discs)
         {
             _graphicsDevice = graphicsDevice;
 
@@ -33,31 +34,34 @@ namespace Bouncy
 
             _transformWidth = _screenWidth / worldWidth;
             _transformHeight = _screenHeight / worldHeight;
+
+            _discs = discs;
         }
 
         public void Draw(GameTime gameTime)
         {
             _spriteBatch.Begin();
 
-            _spriteBatch.Draw(_texture, GetDiscRectangle(), Color.White);
+            foreach (var disc in _discs)
+            {
+                _spriteBatch.Draw(_textureMap[disc.GetType()], GetDiscRectangle(disc), Color.White);
+            }
 
             _spriteBatch.End();
         }
 
-        public void AddRenderItem(Disc disc, Texture2D texture)
+        public void AddRenderItem(Type itemType, Texture2D texture)
         {
-            _disc = disc;
-            _texture = texture;
+            _textureMap.Add(itemType, texture);
         }
 
-        private Rectangle GetDiscRectangle()
+        private Rectangle GetDiscRectangle(Disc _disc)
         {
             //Transform onto display 
             int offsetWidth = (int)(_disc.Radius * _transformWidth);
             int offsetHeight = (int)(_disc.Radius * _transformHeight);
 
-            return new Rectangle((int)(_disc.Position.X * _transformWidth) - offsetWidth, (int)(_disc.Position.Y * _transformHeight) - offsetHeight, (int)(_disc.Radius * 2 * _transformWidth), (int)(_disc.Radius * 2 * _transformHeight));
-            
+            return new Rectangle((int)(_disc.Position.X * _transformWidth) - offsetWidth, (int)(_disc.Position.Y * _transformHeight) - offsetHeight, (int)(_disc.Radius * 2 * _transformWidth), (int)(_disc.Radius * 2 * _transformHeight));            
         }
     }
 }
